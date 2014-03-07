@@ -48,8 +48,13 @@
                           {::thread t})))))
 
 (defmacro bg
-  "Runs code in a future, defs the future to a var, and prints a
-  message when it finishes."
+  "Runs the body in a background thread, returning a symbol for
+  a new var created that contains information about how long the
+  code has been running.
+
+  If it completes successfully, the var will be updated with the result.
+
+  If an exception is thrown, the var will contain the exception."
   [& body]
   (let [sym (symbol (str "bg" (swap! bg-id-counter inc)))]
     ;; TODO: make the future somehow print how long it's been running
