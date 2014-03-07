@@ -57,8 +57,6 @@
   If an exception is thrown, the var will contain the exception."
   [& body]
   (let [sym (symbol (str "bg" (swap! bg-id-counter inc)))]
-    ;; TODO: make the future somehow print how long it's been running
-    ;; when you print it.
     `(do (println "Starting background task" '~sym)
          (def ~sym)
          (run-and-report (var ~sym) '~sym (fn [] ~@body))
@@ -71,5 +69,6 @@
 
 (binding [*ns* (the-ns 'clojure.core)]
   (eval '(def &bs
-           "Pulls repl-utility stuff into this namespace."
+           "A function installed by com.gfredericks.repl that refers
+           repl-utility stuff into the current namespace."
            com.gfredericks.repl/bootstrap-ns)))
