@@ -1,6 +1,40 @@
 (ns com.gfredericks.repl
   "My repl utilities.")
 
+;;;
+;;; Bootstrapping
+;;;
+
+(defn bootstrap-ns
+  []
+  ;; excluding dir because we provide a better version in this
+  ;; namespace
+  (require '[clojure.repl :refer :all :exclude [dir]]
+           '[com.gfredericks.repl :refer :all]))
+
+
+(binding [*ns* (the-ns 'clojure.core)]
+  (eval '(def &bs
+           "A function installed by com.gfredericks.repl that refers
+           repl-utility stuff into the current namespace."
+           com.gfredericks.repl/bootstrap-ns)))
+
+;;;
+;;; Enhanced versions of clojure.repl stuff
+;;;
+
+(defmacro dir
+  "Like clojure.repl/dir but also works with local aliases."
+  [ns-name-or-alias]
+  (list `clojure.repl/dir
+        (if-let [ns (get (ns-aliases *ns*) ns-name-or-alias)]
+          (.getName ns)
+          ns-name-or-alias)))
+
+;;;
+;;; Running things in the background
+;;;
+
 (defonce bg-id-counter (atom -1))
 
 (defn ^:private time-str
@@ -61,14 +95,3 @@
          (def ~sym)
          (run-and-report (var ~sym) '~sym (fn [] ~@body))
          '~sym)))
-
-(defn bootstrap-ns
-  []
-  (require '[clojure.repl :refer :all]
-           '[com.gfredericks.repl :refer :all]))
-
-(binding [*ns* (the-ns 'clojure.core)]
-  (eval '(def &bs
-           "A function installed by com.gfredericks.repl that refers
-           repl-utility stuff into the current namespace."
-           com.gfredericks.repl/bootstrap-ns)))
