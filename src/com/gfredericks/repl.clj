@@ -60,51 +60,50 @@
 (defn ^:private now [] (System/currentTimeMillis))
 
 (defmethod print-method ::bg
-  [{:keys [start-time name]} pw]
-  (.write pw (str "#<" name " has been running for "
-                  (time-str (- (now) start-time))
-                  ">")))
-
-(defn ^:private set-val-and-meta
-  [var val meta]
-  (alter-var-root var (constantly val))
-  (alter-meta! var merge meta))
+  [{:keys [start-time end-time name ex state]} pw]
+  (let [msg (case state
+              :running (str name " has been running for "
+                            (time-str (- (now) start-time)))
+              :error (str "ERROR(" (.getMessage ex) "): " name " ran for "
+                          (time-str (- end-time start-time)))
+              :done (str "DONE: " name " ran for " (time-str (- end-time start-time))))]
+    (.write pw (str "#<" msg ">"))))
 
 (defn run-and-report
-  [var var-name func]
-  (let [start (now)]
+  [result-var status-var var-name func]
+  (let [start-time (now)]
     (letfn [(go []
               (try (let [res (func)
-                         runtime (- (now) start)]
-                     (set-val-and-meta var res {::runtime runtime})
-                     (println "Background job" var-name "finished in" (time-str runtime)))
+                         end-time (now)]
+                     (alter-var-root status-var assoc :state :done :end-time end-time)
+                     (alter-var-root result-var (constantly res)))
                    (catch Throwable t
-                     (let [runtime (- (now) start)]
-                       (set-val-and-meta var t {::runtime runtime})
-                       (println (str "Error in background job "
-                                     var-name
-                                     "! (ran for"
-                                     (time-str runtime)
-                                     ")"))
-                       (println t)))))]
+                     (let [end-time (now)]
+                       (alter-var-root status-var assoc :state :error, :end-time end-time, :ex t)
+                       (alter-var-root result-var (constantly t)))))
+              (println status-var))]
+      (alter-var-root status-var (constantly
+                                  (with-meta {:name var-name, :start-time start-time, :state :running}
+                                    {:type ::bg})))
       (let [t (doto (Thread. (bound-fn [] (go)))
                 (.start))]
-        (set-val-and-meta var
-                          (with-meta {:name var-name, :thread t, :start-time start}
-                            {:type ::bg})
-                          {::thread t})))))
+        (alter-var-root status-var assoc :thread t)))))
 
 (defmacro bg
-  "Runs the body in a background thread, returning a symbol for
-  a new var created that contains information about how long the
-  code has been running.
+  "Runs the body in a background thread.
 
-  If it completes successfully, the var will be updated with the result.
+  Creates two vars, one named bg<N> and the other bg<N>'.
 
-  If an exception is thrown, the var will contain the exception."
+  The first will eventually contain the result of the computation,
+  or any exception that is thrown.
+
+  The second is a map that prints with status & runtime information."
   [& body]
-  (let [sym (symbol (str "bg" (swap! bg-id-counter inc)))]
+  (let [base (str "bg" (swap! bg-id-counter inc))
+        sym (symbol base)
+        sym' (symbol (str base \'))]
     `(do (println "Starting background task" '~sym)
          (def ~sym)
-         (run-and-report (var ~sym) '~sym (fn [] ~@body))
+         (def ~sym')
+         (run-and-report (var ~sym) (var ~sym') '~sym (fn [] ~@body))
          '~sym)))
