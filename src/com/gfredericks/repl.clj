@@ -1,5 +1,6 @@
 (ns com.gfredericks.repl
-  "My repl utilities.")
+  "My repl utilities."
+  (:require [cemerick.pomegranate :as pom]))
 
 ;;;
 ;;; Bootstrapping
@@ -18,6 +19,18 @@
            "A function installed by com.gfredericks.repl that refers
            repl-utility stuff into the current namespace."
            com.gfredericks.repl/bootstrap-ns)))
+
+;;;
+;;; Dependencies
+;;;
+
+(defmacro add-dep
+  "E.g.: (add-dep [com.gfredericks/z \"0.1.0\"])"
+  [lein-mvn-coords]
+  `(pom/add-dependencies :coordinates ['~lein-mvn-coords]
+                         :repositories
+                         (merge cemerick.pomegranate.aether/maven-central
+                                {"clojars" "http://clojars.org/repo"})))
 
 ;;;
 ;;; Enhanced versions of clojure.repl stuff
