@@ -81,7 +81,7 @@
                      (let [end-time (now)]
                        (alter-var-root status-var assoc :state :error, :end-time end-time, :ex t)
                        (alter-var-root result-var (constantly t)))))
-              (println status-var))]
+              (println @status-var))]
       (alter-var-root status-var (constantly
                                   (with-meta {:name var-name, :start-time start-time, :state :running}
                                     {:type ::bg})))
