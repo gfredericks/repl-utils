@@ -97,7 +97,9 @@
   The first will eventually contain the result of the computation,
   or any exception that is thrown.
 
-  The second is a map that prints with status & runtime information."
+  The second is a map that prints with status & runtime information.
+
+  Returns the name of the first var."
   [& body]
   (let [base (str "bg" (swap! bg-id-counter inc))
         sym (symbol base)
