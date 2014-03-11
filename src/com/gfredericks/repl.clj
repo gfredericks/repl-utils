@@ -52,10 +52,16 @@
 
 (defn ^:private time-str
   [ms-delta]
-  (let [min (/ ms-delta 60000.0)]
-    (if (>= min 60)
-      (format "%.2f hours" (/ min 60))
-      (format "%.2f minutes" min))))
+  (let [sec (/ ms-delta 1000.0)
+        min (/ sec 60.0)]
+    (cond (< sec 60)
+          (format "%.3f seconds" sec)
+
+          (< min 60)
+          (format "%.2f minutes" min)
+
+          :else
+          (format "%.2f hours" (/ min 60)))))
 
 (defn ^:private now [] (System/currentTimeMillis))
 
