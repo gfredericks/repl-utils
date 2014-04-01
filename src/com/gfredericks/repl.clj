@@ -3,24 +3,6 @@
   (:require [cemerick.pomegranate :as pom]))
 
 ;;;
-;;; Bootstrapping
-;;;
-
-(defn bootstrap-ns
-  []
-  ;; excluding dir because we provide a better version in this
-  ;; namespace
-  (require '[clojure.repl :refer :all :exclude [dir]]
-           '[com.gfredericks.repl :refer :all]))
-
-
-(binding [*ns* (the-ns 'clojure.core)]
-  (eval '(def &bs
-           "A function installed by com.gfredericks.repl that refers
-           repl-utility stuff into the current namespace."
-           com.gfredericks.repl/bootstrap-ns)))
-
-;;;
 ;;; Dependencies
 ;;;
 
