@@ -1,0 +1,37 @@
+(ns com.gfredericks.repl.util)
+
+(let [sentinel (Object.)]
+  (defn promise->future
+    "Given a promise that will either be delivered with {:val x} or
+  {:err t}, returns a future-like object that when dereferenced
+  will either return x or throw t."
+    [p]
+    (letfn [(wait []
+              (let [m @p]
+                (if-let [pair (find m :val)]
+                  (val pair)
+                  (if-let [pair (find m :err)]
+                    (throw (java.util.concurrent.ExecutionException.
+                            ^Throwable (val pair)))
+                    (throw (Error. "Promise in promise->future delivered with invalid value!"))))))]
+      (reify
+        clojure.lang.IDeref
+        (deref [_] (wait))
+        clojure.lang.IBlockingDeref
+        (deref
+          [_ timeout-ms timeout-val]
+          (let [v (deref p timeout-ms sentinel)]
+            (if (= sentinel v) timeout-val (wait))))
+        clojure.lang.IPending
+        (isRealized [_] (realized? p))
+        java.util.concurrent.Future
+        (get [_] (wait))
+        (get [this ^long timeout ^java.util.concurrent.TimeUnit unit]
+          (if (= sentinel
+                 (deref this (.toMillis unit timeout)))
+            (java.util.concurrent.TimeoutException.)
+            (wait)))
+        (isCancelled [_] false)
+        (isDone [_] (realized? p))
+        ;; (cancel [_ interrupt?] (.cancel fut interrupt?))
+        ))))

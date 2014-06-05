@@ -1,6 +1,7 @@
 (ns com.gfredericks.repl
   "My repl utilities."
-  (:require [cemerick.pomegranate :as pom]))
+  (:require [cemerick.pomegranate :as pom]
+            [com.gfredericks.repl.util :as util]))
 
 ;;;
 ;;; Dependencies
@@ -48,8 +49,9 @@
 (defn ^:private now [] (System/currentTimeMillis))
 
 (defmethod print-method ::bg
-  [{:keys [start-time end-time name ex state]} pw]
-  (let [msg (case state
+  [fut pw]
+  (let [{:keys [start-time end-time name ex state]} (meta fut)
+        msg (case state
               :running (str name " has been running for "
                             (time-str (- (now) start-time)))
               :error (str "ERROR(" (.getMessage ex) "): " name " ran for "
@@ -59,23 +61,26 @@
 
 (defn run-and-report
   [result-var status-var var-name func]
-  (let [start-time (now)]
+  (let [start-time (now)
+        p (promise)]
     (letfn [(go []
               (try (let [res (func)
                          end-time (now)]
-                     (alter-var-root status-var assoc :state :done :end-time end-time)
+                     (deliver p {:val res})
+                     (alter-var-root status-var vary-meta assoc :state :done :end-time end-time)
                      (alter-var-root result-var (constantly res)))
                    (catch Throwable t
                      (let [end-time (now)]
-                       (alter-var-root status-var assoc :state :error, :end-time end-time, :ex t)
+                       (deliver p {:err t})
+                       (alter-var-root status-var vary-meta assoc :state :error, :end-time end-time, :ex t)
                        (alter-var-root result-var (constantly t)))))
               (println @status-var))]
       (alter-var-root status-var (constantly
-                                  (with-meta {:name var-name, :start-time start-time, :state :running}
-                                    {:type ::bg})))
+                                  (with-meta (util/promise->future p)
+                                    {:type ::bg, :name var-name, :start-time start-time, :state :running})))
       (let [t (doto (Thread. (bound-fn [] (go)))
                 (.start))]
-        (alter-var-root status-var assoc :thread t)))))
+        (alter-var-root status-var vary-meta assoc :thread t)))))
 
 (defmacro bg
   "Runs the body in a background thread.
@@ -85,7 +90,9 @@
   The first will eventually contain the result of the computation,
   or any exception that is thrown.
 
-  The second is a map that prints with status & runtime information.
+  The second is a future that prints with status & runtime information.
+  When dereferenced, it will block until the body is complete, either
+  returning its result or throwing the exception.
 
   Returns the name of the first var."
   [& body]
