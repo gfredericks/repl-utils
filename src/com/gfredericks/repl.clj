@@ -1,6 +1,8 @@
 (ns com.gfredericks.repl
   "My repl utilities."
   (:require [cemerick.pomegranate :as pom]
+            [clojure.pprint :as pprint]
+            [clojure.walk :as walk]
             [com.gfredericks.repl.util :as util]))
 
 ;;;
@@ -26,6 +28,34 @@
         (if-let [ns (get (ns-aliases *ns*) ns-name-or-alias)]
           (.getName ns)
           ns-name-or-alias)))
+
+;;;
+;;; Slightly better pprint stuff
+;;;
+
+(defn ^:private canonize
+  [ob]
+  (walk/postwalk (fn [x]
+                   (cond (map? x)
+                         (into (sorted-map) x)
+
+                         (set? x)
+                         (into (sorted-set) x)
+
+                         :else
+                         x))
+                 ob))
+
+(defn pprint
+  "Like clojure.pprint/pprint, but canonizes input with clojure.walk
+  first."
+  [x]
+  (pprint/pprint (canonize x)))
+
+(defn pp
+  "Like clojure.pprint/pp, but canonizes input first."
+  [x]
+  (pprint *1))
 
 ;;;
 ;;; Running things in the background
