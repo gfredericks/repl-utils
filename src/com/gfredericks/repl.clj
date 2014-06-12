@@ -53,8 +53,8 @@
   (pprint/pprint (canonize x)))
 
 (defn pp
-  "Like clojure.pprint/pp, but canonizes input first."
-  [x]
+  "Like clojure.pprint/pp, but canonizes *1 first."
+  []
   (pprint *1))
 
 ;;;
