@@ -46,16 +46,11 @@
                          x))
                  ob))
 
-(defn pprint
-  "Like clojure.pprint/pprint, but canonizes input with clojure.walk
-  first."
-  [x]
-  (pprint/pprint (canonize x)))
-
 (defn pp
-  "Like clojure.pprint/pp, but canonizes *1 first."
-  []
-  (pprint *1))
+  "Combines functionality of clojure.pprint/pprint and clojure.pprint/pp,
+  but also canonizes the object before printing."
+  ([] (pp *1))
+  ([x] (pprint/pprint (canonize x))))
 
 ;;;
 ;;; Running things in the background
