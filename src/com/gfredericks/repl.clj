@@ -66,58 +66,64 @@
 (defn ^:private now [] (System/currentTimeMillis))
 
 (defmethod print-method ::bg
-  [fut pw]
-  (let [{:keys [start-time end-time name ex state]} (meta fut)
+  [var pw]
+  (let [{:keys [start-time end-time ex state name]} (meta var)
         msg (case state
               :running (str name " has been running for "
                             (util/time-str (- (now) start-time)))
               :error (str "ERROR(" (.getMessage ex) "): " name " ran for "
                           (util/time-str (- end-time start-time)))
               :done (str "DONE: " name " ran for " (util/time-str (- end-time start-time))))]
-    (.write pw (str "#<" msg ">"))))
+    (doto pw
+      (.write "#<")
+      (.write msg)
+      (.write ">"))))
 
 (defn run-and-report
-  [result-var status-var var-name func]
-  (let [start-time (now)
+  [var func]
+  (let [var-name (-> var meta :name)
+        start-time (now)
         p (promise)]
+    (alter-meta! var assoc
+                 :start-time start-time
+                 :state :running
+                 :future (util/promise->future p))
     (letfn [(go []
               (try (let [res (func)
                          end-time (now)]
                      (deliver p {:val res})
-                     (alter-var-root status-var vary-meta assoc :state :done :end-time end-time)
-                     (alter-var-root result-var (constantly res)))
+                     (doto var
+                       (alter-meta! assoc :state :done, :end-time end-time)
+                       (alter-var-root (constantly res))))
                    (catch Throwable t
                      (let [end-time (now)]
                        (deliver p {:err t})
-                       (alter-var-root status-var vary-meta assoc :state :error, :end-time end-time, :ex t)
-                       (alter-var-root result-var (constantly t)))))
-              (println @status-var))]
-      (alter-var-root status-var (constantly
-                                  (with-meta (util/promise->future p)
-                                    {:type ::bg, :name var-name, :start-time start-time, :state :running})))
+                       (doto var
+                         (alter-meta! assoc :state :error, :end-time end-time)
+                         (alter-var-root (constantly t))))))
+              (println var))]
       (let [t (doto (Thread. (bound-fn [] (go)))
                 (.start))]
-        (alter-var-root status-var vary-meta assoc :thread t)))))
+        (alter-meta! var assoc :thread t)))))
 
 (defmacro bg
   "Runs the body in a background thread.
 
-  Creates two vars, one named bg<N> and the other bg<N>'.
+  Defs (and returns) a var named bg<N>, which prints as a message
+  with runtime information. When the body finishes, the var will
+  contain either the result, or any exception that is thrown.
 
-  The first will eventually contain the result of the computation,
-  or any exception that is thrown.
+  The var also contains some useful metadata:
 
-  The second is a future that prints with status & runtime information.
-  When dereferenced, it will block until the body is complete, either
-  returning its result or throwing the exception.
-
-  Returns the name of the first var."
+    :form   - the code of the bg callm
+    :state  - one of #{:running :done :error}
+    :future - a future-like object that can be derefenced, will
+              block, and will throw an exception when appropriate
+    :thread - the thread object running the code"
   [& body]
   (let [base (str "bg" (swap! bg-id-counter inc))
-        sym (symbol base)
-        sym' (symbol (str base \'))]
+        sym (symbol base)]
     `(do (println "Starting background task" '~sym)
-         (def ~sym)
-         (def ~sym')
-         (run-and-report (var ~sym) (var ~sym') '~sym (fn [] ~@body))
-         '~sym)))
+         (doto (def ~sym)
+           (alter-meta! assoc :form '~&form :type ::bg)
+           (run-and-report (^:once fn* [] ~@body))))))
