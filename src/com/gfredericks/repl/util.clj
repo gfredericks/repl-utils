@@ -35,3 +35,22 @@
         (isDone [_] (realized? p))
         ;; (cancel [_ interrupt?] (.cancel fut interrupt?))
         ))))
+
+(defn time-str
+  [ms-delta]
+  (let [quot-rem (juxt quot rem)
+        [sec' ms] (quot-rem ms-delta 1000)
+        [min' sec] (quot-rem sec' 60)
+        [hour' min] (quot-rem min' 60)
+        [day' hour] (quot-rem hour' 24)]
+    (cond (< sec' 60)
+          (format "%d.%03d seconds" sec ms)
+
+          (< min' 60)
+          (format "%d:%02d minutes" min sec)
+
+          (< hour' 24)
+          (format "%d:%02d hours" hour min)
+
+          :else
+          (format "%d days, %d hours" day' hour))))

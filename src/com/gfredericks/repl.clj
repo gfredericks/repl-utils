@@ -63,19 +63,6 @@
 
 (defonce bg-id-counter (atom -1))
 
-(defn ^:private time-str
-  [ms-delta]
-  (let [sec (/ ms-delta 1000.0)
-        min (/ sec 60.0)]
-    (cond (< sec 60)
-          (format "%.3f seconds" sec)
-
-          (< min 60)
-          (format "%.2f minutes" min)
-
-          :else
-          (format "%.2f hours" (/ min 60)))))
-
 (defn ^:private now [] (System/currentTimeMillis))
 
 (defmethod print-method ::bg
@@ -83,10 +70,10 @@
   (let [{:keys [start-time end-time name ex state]} (meta fut)
         msg (case state
               :running (str name " has been running for "
-                            (time-str (- (now) start-time)))
+                            (util/time-str (- (now) start-time)))
               :error (str "ERROR(" (.getMessage ex) "): " name " ran for "
-                          (time-str (- end-time start-time)))
-              :done (str "DONE: " name " ran for " (time-str (- end-time start-time))))]
+                          (util/time-str (- end-time start-time)))
+              :done (str "DONE: " name " ran for " (util/time-str (- end-time start-time))))]
     (.write pw (str "#<" msg ">"))))
 
 (defn run-and-report
