@@ -110,7 +110,7 @@
 
   The var also contains some useful metadata:
 
-    :form   - the code of the bg callm
+    :form   - the code of the bg call
     :state  - one of #{:running :done :error}
     :future - a future-like object that can be derefenced, will
               block, and will throw an exception when appropriate
