@@ -62,11 +62,11 @@
 
 (defmethod print-method ::bg
   [var pw]
-  (let [{:keys [start-time end-time ex state name]} (meta var)
+  (let [{:keys [start-time end-time state name]} (meta var)
         msg (case state
               :running (str name " has been running for "
                             (util/time-str (- (now) start-time)))
-              :error (str "ERROR(" (.getMessage ex) "): " name " ran for "
+              :error (str "ERROR(" (.getMessage (deref var)) "): " name " ran for "
                           (util/time-str (- end-time start-time)))
               :done (str "DONE: " name " ran for " (util/time-str (- end-time start-time))))]
     (doto pw
