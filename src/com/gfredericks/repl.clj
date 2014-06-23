@@ -122,3 +122,9 @@
          (doto (def ~sym)
            (alter-meta! assoc :form '~&form :type ::bg)
            (run-and-report (^:once fn* [] ~@body))))))
+
+(defmacro bg-deref
+  "Deref's the given bg object's future. Blocks and returns the value,
+  or throws an exception if the bg threw an exception."
+  [bg-name]
+  `(-> (var ~bg-name) meta :future deref))
