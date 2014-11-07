@@ -102,11 +102,18 @@
         (alter-meta! var assoc :thread t)))))
 
 (defmacro bg
-  "Runs the body in a background thread.
+  "Runs the body in a background thread, and creates a var for the
+  eventual result. The var will have the optionally supplied name
+  or else will be named bg<N>. Logs to *out* when the background
+  task starts and finishes.
 
-  Defs (and returns) a var named bg<N>, which prints as a message
-  with runtime information. When the body finishes, the var will
-  contain either the result, or any exception that is thrown.
+  When the body finishes, the var will contain either the result, or
+  any exception that is thrown.
+
+  E.g.,
+
+    (bg foo (slurp file)) ;; => #'foo
+    (bg (slurp file)) ;; => #'bg0
 
   The var also contains some useful metadata:
 
@@ -115,9 +122,10 @@
     :future - a future-like object that can be derefenced, will
               block, and will throw an exception when appropriate
     :thread - the thread object running the code"
-  [& body]
-  (let [base (str "bg" (swap! bg-id-counter inc))
-        sym (symbol base)]
+  [& args]
+  (let [[sym body] (if (and (symbol? (first args)) (seq (rest args)))
+                     [(first args) (rest args)]
+                     [(symbol (str "bg" (swap! bg-id-counter inc))) args])]
     `(do (println "Starting background task" '~sym)
          (doto (def ~sym)
            (alter-meta! assoc :form '~&form :type ::bg)
