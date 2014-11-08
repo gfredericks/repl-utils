@@ -86,16 +86,16 @@
     (letfn [(go []
               (try (let [res (func)
                          end-time (now)]
-                     (deliver p {:val res})
                      (doto var
                        (alter-meta! assoc :state :done, :end-time end-time)
-                       (alter-var-root (constantly res))))
+                       (alter-var-root (constantly res)))
+                     (deliver p {:val res}))
                    (catch Throwable t
                      (let [end-time (now)]
-                       (deliver p {:err t})
                        (doto var
                          (alter-meta! assoc :state :error, :end-time end-time)
-                         (alter-var-root (constantly t))))))
+                         (alter-var-root (constantly t)))
+                       (deliver p {:err t}))))
               (println var))]
       (let [t (doto (Thread. (bound-fn [] (go)))
                 (.start))]
