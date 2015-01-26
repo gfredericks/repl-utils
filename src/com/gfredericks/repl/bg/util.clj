@@ -1,4 +1,4 @@
-(ns com.gfredericks.repl.util)
+(ns com.gfredericks.repl.bg.util)
 
 (let [sentinel (Object.)]
   (defn promise->future
