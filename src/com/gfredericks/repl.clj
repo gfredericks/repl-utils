@@ -51,3 +51,13 @@
   but also canonizes the object before printing."
   ([] (pp *1))
   ([x] (pprint/pprint (canonize x))))
+
+;;
+;; Interrupt-friendly infinite loop
+;;
+
+(defmacro forever
+  "Executes body repeatedly, watching for thread interrupts."
+  [& body]
+  `(while (not (Thread/interrupted))
+     ~@body))
