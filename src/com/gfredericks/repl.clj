@@ -53,6 +53,19 @@
   ([x] (pprint/pprint (canonize x))))
 
 ;;
+;; Debugging with locals-access
+;;
+
+(defmacro locals
+  []
+  (let [names (keys &env)]
+    (zipmap (map #(list 'quote %) names) names)))
+
+(defmacro throw-locals
+  ([] `(throw-locals "Throwing locals"))
+  ([msg] `(throw (ex-info ~msg (locals)))))
+
+;;
 ;; Interrupt-friendly infinite loop
 ;;
 
