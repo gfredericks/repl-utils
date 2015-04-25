@@ -18,8 +18,6 @@ repl-friendly features.
 First a brief example:
 
 ``` clojure
-user> (require '[com.gfredericks.repl-utils.bg :refer [bg]])
-FileNotFoundException Could not locate com/gfredericks/repl_utils/bg__init.class or com/gfredericks/repl_utils/bg.clj on classpath. Please check that namespaces with dashes use underscores in the Clojure file name.  clojure.lang.RT.load (RT.java:443)
 user> (require '[com.gfredericks.repl.bg :refer [bg]])
 nil
 user> (bg (Thread/sleep 2500) (inc 41))
