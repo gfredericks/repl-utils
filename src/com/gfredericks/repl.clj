@@ -1,7 +1,10 @@
 (ns com.gfredericks.repl
   "My repl utilities."
   (:require [cemerick.pomegranate :as pom]
+            [clojure.java.classpath :as cp]
             [clojure.pprint :as pprint]
+            [clojure.test :as test]
+            [clojure.tools.namespace.find :as ns]
             [clojure.walk :as walk]))
 
 ;;;
@@ -74,3 +77,21 @@
   [& body]
   `(while (not (Thread/interrupted))
      ~@body))
+
+;;
+;; Running all the tests
+;;
+
+(defn run-all-tests
+  "Like clojure.test/run-all-tests, but also requires namespaces first."
+  []
+  (let [nses (->> (cp/classpath)
+                  (remove #(re-find #"\.jar" (str %)))
+                  (ns/find-namespaces))]
+    (doseq [ns nses] (require ns))
+    (let [nses-with-tests
+          (filter (fn [ns]
+                    (some #(:test (meta %))
+                          (vals (ns-publics ns))))
+                  nses)]
+      (apply test/run-tests nses-with-tests))))
