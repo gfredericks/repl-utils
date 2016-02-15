@@ -40,10 +40,16 @@
   [ob]
   (walk/postwalk (fn [x]
                    (cond (map? x)
-                         (into (sorted-map) x)
+                         (try
+                           (into (sorted-map) x)
+                           (catch ClassCastException _
+                             x))
 
                          (set? x)
-                         (into (sorted-set) x)
+                         (try
+                           (into (sorted-set) x)
+                           (catch ClassCastException _
+                             x))
 
                          :else
                          x))
