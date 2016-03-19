@@ -5,7 +5,7 @@ Some things I made to help my Clojure repl and you can too.
 ## Obtention
 
 ```
-[com.gfredericks/repl-utils "0.2.7"]
+[com.gfredericks/repl-utils "0.2.8"]
 ```
 
 ## The Good Parts
