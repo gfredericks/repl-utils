@@ -24,12 +24,15 @@
 ;;;
 
 (defmacro dir
-  "Like clojure.repl/dir but also works with local aliases."
-  [ns-name-or-alias]
-  (list `clojure.repl/dir
-        (if-let [ns (get (ns-aliases *ns*) ns-name-or-alias)]
-          (.getName ns)
-          ns-name-or-alias)))
+  "Like clojure.repl/dir but also works with local aliases. If no arg is
+  given, defaults to current namespace."
+  ([]
+   `(dir ~(.name *ns*)))
+  ([ns-name-or-alias]
+   (list `clojure.repl/dir
+         (if-let [ns (get (ns-aliases *ns*) ns-name-or-alias)]
+           (.getName ns)
+           ns-name-or-alias))))
 
 
 ;;;
