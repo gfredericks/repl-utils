@@ -1,5 +1,6 @@
 (ns com.gfredericks.repl
   "My repl utilities."
+  (:refer-clojure :exclude [comment])
   (:require [cemerick.pomegranate :as pom]
             [clojure.java.classpath :as cp]
             [clojure.pprint :as pprint]
@@ -34,6 +35,26 @@
            (.getName ns)
            ns-name-or-alias))))
 
+;;;
+;;; Enhanced version of clojure.core/comment
+;;;
+
+(defmacro comment
+  "Like clojure.core/comment, but allows uncommenting top-level
+  forms with ~, e.g.:
+
+  (repl/comment
+    (don't do this)
+    (or this)
+    ~(but do this)
+    ~(and this)
+    (but not this))"
+  [& args]
+  (->> args
+       (filter #(and (seq? %)
+                     (= 'clojure.core/unquote (first %))))
+       (map second)
+       (cons 'do)))
 
 ;;;
 ;;; Slightly better pprint stuff
