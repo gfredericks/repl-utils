@@ -12,13 +12,21 @@
 ;;; Dependencies
 ;;;
 
+(def ^:private added-deps (atom #{}))
+
+(defn add-dep*
+  [lein-mvn-coords]
+  (when-not (contains? @added-deps lein-mvn-coords)
+    (pom/add-dependencies :coordinates [lein-mvn-coords]
+                          :repositories
+                          (assoc cemerick.pomegranate.aether/maven-central
+                                 "clojars" "http://clojars.org/repo"))
+    (swap! added-deps conj lein-mvn-coords)))
+
 (defmacro add-dep
   "E.g.: (add-dep [com.gfredericks/z \"0.1.0\"])"
   [lein-mvn-coords]
-  `(pom/add-dependencies :coordinates ['~lein-mvn-coords]
-                         :repositories
-                         (merge cemerick.pomegranate.aether/maven-central
-                                {"clojars" "http://clojars.org/repo"})))
+  `(add-dep* '~lein-mvn-coords))
 
 ;;;
 ;;; Enhanced versions of clojure.repl stuff
