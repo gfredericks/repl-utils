@@ -5,13 +5,21 @@
 
 (defn ^:private now [] (System/currentTimeMillis))
 
+(defn ^:private throwable->message
+  "Returns a (possibly abbreviated) message."
+  [^Throwable ex]
+  (let [s (.getMessage ex)]
+    (if (< 140 (count s))
+      (str (subs s 0 137) "...")
+      s)))
+
 (defmethod print-method ::bg
   [var pw]
   (let [{:keys [start-time end-time state name]} (meta var)
         msg (case state
               :running (str name " has been running for "
                             (util/time-str (- (now) start-time)))
-              :error (str "ERROR(" (.getMessage (deref var)) "): " name " ran for "
+              :error (str "ERROR(" (throwable->message (deref var)) "): " name " ran for "
                           (util/time-str (- end-time start-time)))
               :done (str "DONE: " name " ran for " (util/time-str (- end-time start-time))))]
     (doto pw
