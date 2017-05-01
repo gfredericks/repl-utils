@@ -3,6 +3,7 @@
   (:refer-clojure :exclude [comment])
   (:require [cemerick.pomegranate :as pom]
             [clojure.java.classpath :as cp]
+            [clojure.java.shell :as shell]
             [clojure.pprint :as pprint]
             [clojure.test :as test]
             [clojure.tools.namespace.find :as ns]
@@ -133,3 +134,15 @@
                           (vals (ns-publics ns))))
                   nses)]
       (apply test/run-tests nses-with-tests))))
+
+;;
+;; Shelling out to bash
+;;
+
+(defn bash
+  ([cmd]
+   (bash cmd {}))
+  ([cmd opts]
+   (if (:in opts)
+     (apply shell/sh "bash" "-c" cmd (apply concat opts))
+     (apply shell/sh "bash" :in cmd (apply concat opts)))))
