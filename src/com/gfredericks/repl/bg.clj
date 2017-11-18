@@ -1,5 +1,6 @@
 (ns com.gfredericks.repl.bg
-  (:require [com.gfredericks.repl.bg.util :as util]))
+  (:require [com.gfredericks.repl.bg.util :as util])
+  (:import (java.io PrintWriter)))
 
 (defonce bg-id-counter (atom -1))
 
@@ -14,7 +15,7 @@
       s)))
 
 (defmethod print-method ::bg
-  [var pw]
+  [var ^PrintWriter pw]
   (let [{:keys [start-time end-time state name]} (meta var)
         msg (case state
               :running (str name " has been running for "
@@ -50,7 +51,8 @@
                          (alter-var-root (constantly t)))
                        (deliver p {:err t}))))
               (println var))]
-      (let [t (doto (Thread. (bound-fn [] (go)))
+      (let [f (bound-fn [] (go))
+            t (doto (Thread. ^Runnable f)
                 (.start))]
         (alter-meta! var assoc :thread t)))))
 

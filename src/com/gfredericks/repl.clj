@@ -41,7 +41,7 @@
   ([ns-name-or-alias]
    (list `clojure.repl/dir
          (if-let [ns (get (ns-aliases *ns*) ns-name-or-alias)]
-           (.getName ns)
+           (.getName ^clojure.lang.Namespace ns)
            ns-name-or-alias))))
 
 ;;;
