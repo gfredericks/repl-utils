@@ -3,7 +3,7 @@
   :url "https://github.com/fredericksgary/repl-utils"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :dependencies [[com.cemerick/pomegranate "0.3.0"]
+  :dependencies [[com.cemerick/pomegranate "1.0.0"]
                  [org.clojure/clojure "1.6.0"]
                  [org.clojure/java.classpath "0.2.2"]
                  [org.clojure/tools.analyzer.jvm "0.7.0"]
