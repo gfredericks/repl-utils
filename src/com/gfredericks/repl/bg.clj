@@ -1,6 +1,6 @@
 (ns com.gfredericks.repl.bg
   (:require [com.gfredericks.repl.bg.util :as util])
-  (:import (java.io PrintWriter)))
+  (:import (java.io Writer)))
 
 (defonce bg-id-counter (atom -1))
 
@@ -15,7 +15,7 @@
       s)))
 
 (defmethod print-method ::bg
-  [var ^PrintWriter pw]
+  [var ^Writer pw]
   (let [{:keys [start-time end-time state name]} (meta var)
         msg (case state
               :running (str name " has been running for "
