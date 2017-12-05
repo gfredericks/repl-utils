@@ -146,3 +146,31 @@
    (if (:in opts)
      (apply shell/sh "bash" "-c" cmd (apply concat opts))
      (apply shell/sh "bash" :in cmd (apply concat opts)))))
+
+;;
+;; def
+;;
+
+(defmacro def
+  "A variant of def that makes the definition in whatever namespace
+  this macro itself is a part of.
+
+  Intended to be used with tools like lein-shorthand or dot-slash-2,
+  where this macro can be aliased as ./def and then (./def x 42)
+  would result in the var #'./x being created.
+
+  Alternately, (./def foo/x 42) will define x in the foo namespace,
+  unless foo is an alias for a longer namespace in which case it will
+  use that."
+  [var-name val]
+  (let [ns-prefix (symbol (or (namespace (first &form))
+                              (namespace var-name)))
+        sym (symbol ns-prefix)
+        actual-ns (or (get (ns-aliases *ns*) sym)
+                      (try
+                        (the-ns sym)
+                        (catch Exception e
+                          (create-ns sym))))
+        v (doto (intern actual-ns (symbol (name var-name)))
+            (alter-meta! merge (meta var-name)))]
+    `(alter-var-root ~v (constantly ~val))))
