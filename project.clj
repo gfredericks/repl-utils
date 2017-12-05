@@ -1,4 +1,4 @@
-(defproject com.gfredericks/repl-utils "0.2.15-SNAPSHOT"
+(defproject com.gfredericks/repl-utils "0.2.15"
   :description "Gary Fredericks' repl utils."
   :url "https://github.com/fredericksgary/repl-utils"
   :license {:name "Eclipse Public License"
