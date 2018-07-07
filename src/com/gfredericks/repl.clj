@@ -30,21 +30,6 @@
   `(add-dep* '~lein-mvn-coords))
 
 ;;;
-;;; Enhanced versions of clojure.repl stuff
-;;;
-
-(defmacro dir
-  "Like clojure.repl/dir but also works with local aliases. If no arg is
-  given, defaults to current namespace."
-  ([]
-   `(dir ~(.name *ns*)))
-  ([ns-name-or-alias]
-   (list `clojure.repl/dir
-         (if-let [ns (get (ns-aliases *ns*) ns-name-or-alias)]
-           (.getName ^clojure.lang.Namespace ns)
-           ns-name-or-alias))))
-
-;;;
 ;;; Enhanced version of clojure.core/comment
 ;;;
 
