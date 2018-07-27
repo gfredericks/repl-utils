@@ -1,33 +1,12 @@
 (ns com.gfredericks.repl
   "My repl utilities."
   (:refer-clojure :exclude [comment])
-  (:require [cemerick.pomegranate :as pom]
-            [clojure.java.classpath :as cp]
+  (:require [clojure.java.classpath :as cp]
             [clojure.java.shell :as shell]
             [clojure.pprint :as pprint]
             [clojure.test :as test]
             [clojure.tools.namespace.find :as ns]
             [clojure.walk :as walk]))
-
-;;;
-;;; Dependencies
-;;;
-
-(def ^:private added-deps (atom #{}))
-
-(defn add-dep*
-  [lein-mvn-coords]
-  (when-not (contains? @added-deps lein-mvn-coords)
-    (pom/add-dependencies :coordinates [lein-mvn-coords]
-                          :repositories
-                          (assoc cemerick.pomegranate.aether/maven-central
-                                 "clojars" "http://clojars.org/repo"))
-    (swap! added-deps conj lein-mvn-coords)))
-
-(defmacro add-dep
-  "E.g.: (add-dep [com.gfredericks/z \"0.1.0\"])"
-  [lein-mvn-coords]
-  `(add-dep* '~lein-mvn-coords))
 
 ;;;
 ;;; Enhanced version of clojure.core/comment
