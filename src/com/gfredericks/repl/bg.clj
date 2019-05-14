@@ -123,7 +123,7 @@
                    xs
                    (if (or best? (zero? till-next-update))
                      (let [now (System/currentTimeMillis)
-                           frequency-hz (/ (double total) (- now start-time))]
+                           frequency-hz (/ (double total) (- now start-time) 0.001)]
                        (alter-meta! *var* update :search
                                     (fn [m]
                                       (assoc m
