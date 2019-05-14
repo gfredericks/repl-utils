@@ -99,38 +99,43 @@
   (alter-var-root *var* (constantly clojure.lang.PersistentQueue/EMPTY))
   (alter-meta! *var* assoc :search {:total 0, :max-results 10})
   (let [start-time (System/currentTimeMillis)]
-    (loop [best-so-far      nil
-           total            0
-           seq              seq
-           till-next-update 1]
-      (when-let [[x & xs] (clojure.core/seq seq)]
-        (let [k (key-fn x)
-              best? (or (nil? best-so-far) (< best-so-far k))
-              total' (inc total)]
-          (when best?
-            (printf "New best for %s! (%s)\n" (.sym *var*) k)
-            (let [max-results (-> *var* meta :search :max-results)]
-              (alter-var-root *var*
-                              (fn [q]
-                                (loop [q' (conj q x)]
-                                  (if (< max-results (count q'))
-                                    (recur (pop q'))
-                                    q'))))))
+    (try
+      (loop [best-so-far      nil
+             total            0
+             seq              seq
+             till-next-update 1]
+        (if-let [[x & xs] (clojure.core/seq seq)]
+          (let [k (key-fn x)
+                best? (or (nil? best-so-far) (< best-so-far k))
+                total' (inc total)]
+            (when best?
+              (printf "New best for %s! (%s)\n" (.sym *var*) k)
+              (let [max-results (-> *var* meta :search :max-results)]
+                (alter-var-root *var*
+                                (fn [q]
+                                  (loop [q' (conj q x)]
+                                    (if (< max-results (count q'))
+                                      (recur (pop q'))
+                                      q'))))))
 
-          (recur (if best? k best-so-far)
-                 total'
-                 xs
-                 (if (or best? (zero? till-next-update))
-                   (let [now (System/currentTimeMillis)
-                         frequency-hz (/ (double total) (- now start-time))]
-                     (alter-meta! *var* update :search
-                                  (fn [m]
-                                    (assoc m
-                                           :total total'
-                                           :frequency-hz frequency-hz)))
-                     ;; aim to update about once a second
-                     (Math/round frequency-hz))
-                   (dec till-next-update))))))))
+            (recur (if best? k best-so-far)
+                   total'
+                   xs
+                   (if (or best? (zero? till-next-update))
+                     (let [now (System/currentTimeMillis)
+                           frequency-hz (/ (double total) (- now start-time))]
+                       (alter-meta! *var* update :search
+                                    (fn [m]
+                                      (assoc m
+                                             :total total'
+                                             :frequency-hz frequency-hz)))
+                       ;; aim to update about once a second
+                       (Math/round frequency-hz))
+                     (dec till-next-update))))
+          @*var*))
+      (catch Throwable t
+        (printf "Error in %s!\n" (.sym *var*))
+        (vary-meta @*var* assoc :caught t)))))
 
 (defmacro bg-search
   "Given a key-fn and a lazy seq, runs a bg process that updates the
