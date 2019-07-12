@@ -137,4 +137,4 @@
                           (create-ns sym))))
         v (doto (intern actual-ns (symbol (name var-name)))
             (alter-meta! merge (meta var-name)))]
-    `(alter-var-root ~v (constantly ~val))))
+    `(doto ~v (alter-var-root (constantly ~val)))))
